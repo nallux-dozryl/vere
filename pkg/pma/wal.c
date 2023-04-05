@@ -82,8 +82,7 @@ _open_file(const char *dir,
            const char *stem,
            const char *suffix,
            char      **path,
-           int        *fd,
-           size_t     *len);
+           int        *fd);
 
 /// Compute the checksum of a page and its accompanying page index.
 ///
@@ -99,14 +98,12 @@ _open_file(const char *dir,
            const char *stem,
            const char *suffix,
            char      **path,
-           int        *fd,
-           size_t     *len)
+           int        *fd)
 {
     assert(dir);
     assert(suffix);
     assert(path);
     assert(fd);
-    assert(len);
 
     int err;
 
@@ -123,23 +120,10 @@ _open_file(const char *dir,
         goto free_path;
     }
 
-    struct stat buf;
-    if (fstat(fd_, &buf) == -1) {
-        err = errno;
-        fprintf(stderr,
-                "wal: failed to determine length of %s: %s\r\n",
-                *path,
-                strerror(err));
-        goto close_fd;
-    }
-
     *fd  = fd_;
-    *len = buf.st_size;
 
     return 0;
 
-close_fd:
-    close(fd_);
 free_path:
     free((void *)*path);
 fail:
@@ -175,18 +159,75 @@ wal_open(const char *path, wal_t *wal)
         goto fail;
     }
 
-    size_t meta_len;
     if (_open_file(path,
                    kMetaStem,
                    kWalExt,
                    (char **)&wal->meta_path,
-                   &wal->meta_fd,
-                   &meta_len)
+                   &wal->meta_fd)
         == -1)
     {
         err = errno;
         fprintf(stderr, "wal: failed to open metadata file\r\n");
         goto fail;
+    }
+
+    if (_open_file(path,
+                   kDataStem,
+                   kWalExt,
+                   (char **)&wal->data_path,
+                   &wal->data_fd)
+        == -1)
+    {
+        err = errno;
+        fprintf(stderr, "wal: failed to open data file\r\n");
+        goto close_metadata_file;
+    }
+
+    if (wal_verify(wal) == 0) {
+        return 0;
+    }
+
+    // XX who closes between us and wal_verify?
+
+    // close(wal->data_fd);
+    // free((void *)wal->data_path);
+
+close_metadata_file:
+    // close(wal->meta_fd);
+    // free((void *)wal->meta_path);
+fail:
+    errno = err;
+    return -1;
+}
+
+int
+wal_verify(wal_t *wal)
+{
+    int err;
+    size_t meta_len, data_len;
+
+    {
+        struct stat buf;
+        if (fstat(wal->meta_fd, &buf) == -1) {
+            err = errno;
+            fprintf(stderr,
+                    "wal: failed to determine length of metadata: %s\r\n",
+                    strerror(err));
+            goto close_metadata_file;
+        }
+        meta_len = buf.st_size;
+    }
+
+    {
+        struct stat buf;
+        if (fstat(wal->data_fd, &buf) == -1) {
+            err = errno;
+            fprintf(stderr,
+                    "wal: failed to determine length of data: %s\r\n",
+                    strerror(err));
+            goto close_metadata_file;
+        }
+        data_len = buf.st_size;
     }
 
     // Don't include the header length in the entry count calculation.
@@ -205,19 +246,6 @@ wal_open(const char *path, wal_t *wal)
         goto close_metadata_file;
     }
 
-    size_t data_len;
-    if (_open_file(path,
-                   kDataStem,
-                   kWalExt,
-                   (char **)&wal->data_path,
-                   &wal->data_fd,
-                   &data_len)
-        == -1)
-    {
-        err = errno;
-        fprintf(stderr, "wal: failed to open data file\r\n");
-        goto close_metadata_file;
-    }
 
     if (data_len % kPageSz != 0) {
         err = ENOTRECOVERABLE;

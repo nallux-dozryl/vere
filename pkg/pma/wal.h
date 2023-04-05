@@ -73,6 +73,9 @@ typedef struct wal {
 int
 wal_open(const char *path, wal_t *wal);
 
+int
+wal_verify(wal_t *wal);
+
 /// Append a new entry to a WAL.
 ///
 /// @param[in] wal     WAL handle. Must not be NULL.
