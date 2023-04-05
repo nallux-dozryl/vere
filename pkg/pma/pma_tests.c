@@ -11,6 +11,12 @@
 #include "page.h"
 #include "util.h"
 
+#ifdef __APPLE__
+  #define BASE_PTR  0x28000000000
+#else
+  #define BASE_PTR  0x200000000
+#endif
+
 //==============================================================================
 // GLOBAL VARIABLES
 
@@ -63,7 +69,7 @@ _oom_handler(void *fault_addr)
 static void
 _test_addr_to_page_idx(void)
 {
-    void               *base = (void *)0x200000000;
+    void               *base = (void *)BASE_PTR;
     static const size_t kLen = 1 << 20;
     _heap_len                = kPageSz;
     _stack_len               = kPageSz;
@@ -93,7 +99,7 @@ _test_pma(void)
 {
     // Anonymous arena.
     {
-        void  *base = (void *)0x200000000;
+        void  *base = (void *)BASE_PTR;
         size_t len  = 1 << 20;
         pma_t *pma = pma_load(base, len, NULL, NULL, _len_getter, _oom_handler);
         assert(pma);
@@ -128,7 +134,7 @@ _test_pma(void)
 
     // File-backed arena with empty files.
     {
-        void             *base         = (void *)0x200000000;
+        void             *base         = (void *)BASE_PTR;
         size_t            len          = 1 << 20;
         static const char kHeapFile[]  = "/tmp/nonexistent-heap.bin";
         static const char kStackFile[] = "/tmp/nonexistent-stack.bin";
@@ -178,7 +184,7 @@ _test_pma(void)
 
     // File-backed arena with non-empty files.
     {
-        void               *base         = (void *)0x200000000;
+        void               *base         = (void *)BASE_PTR;
         size_t              len          = GiB(2);
         static const char   kHeapFile[]  = "/tmp/definitely-exists-heap.bin";
         static const char   kStackFile[] = "/tmp/definitely-exists-stack.bin";
