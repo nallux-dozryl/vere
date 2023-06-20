@@ -120,14 +120,6 @@
     u3_meow mew_u;                      //  fragment
   } u3_purr;
 
-/* u3_body: ames packet body
-*/
-  typedef struct _u3_body {
-    c3_s    con_s;                      //  content size
-    c3_y*   con_y;                      //  content
-    c3_l    mug_l;                      //  checksum
-  } u3_body;
-
 /* u3_ptag: packet-type tag
 */
   typedef enum _u3_ptag {
@@ -135,6 +127,14 @@
     PACT_WAIL = 2,                      //  fine request packet
     PACT_PURR = 3                       //  fine response packet
   } u3_ptag;
+
+/* u3_body: ames packet body
+*/
+  typedef struct _u3_body {
+    c3_s    con_s;                      //  content size
+    c3_y*   con_y;                      //  content
+    c3_l    mug_l;                      //  checksum
+  } u3_body;
 
 /* u3_pact: ames packet
  *
