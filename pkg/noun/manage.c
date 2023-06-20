@@ -1748,14 +1748,6 @@ _cm_limits(void)
 # endif
 }
 
-/* u3m_backup(): copy snapshot to .urb/bhk (if it doesn't exist yet).
-*/
-c3_o
-u3m_backup(c3_o ovw_o)
-{
-  return u3e_backup(ovw_o);
-}
-
 /* u3m_fault(): handle a memory event with libsigsegv protocol.
 */
 c3_i
@@ -2052,6 +2044,7 @@ extern void u3je_secp_stop(void);
 void
 u3m_stop()
 {
+  //  XX make sure to cleanup snapshot file descriptors if necessary
   u3je_secp_stop();
 }
 

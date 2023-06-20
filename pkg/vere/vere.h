@@ -130,6 +130,7 @@
         c3_c*    pax_c;                     //  path of directory
         uv_file  fil_u;                     //  file, opened read-only to fsync
         u3_dent* all_u;                     //  file list
+        u3_dent* dil_u;                     //  directory list
       } u3_dire;
 
     /* u3_save: checkpoint control.
@@ -312,6 +313,7 @@
       typedef struct _u3_host {
         c3_w       kno_w;                   //  current executing stage
         c3_c*      dir_c;                   //  pier path (no trailing /)
+        c3_d       eve_d;                   //  initial current snapshot
         c3_c*      dem_c;                   //  daemon executable path
         c3_c*      wrk_c;                   //  worker executable path
         c3_d       now_d;                   //  event tick
@@ -537,8 +539,9 @@
           u3_dire*         dir_u;               //  main pier directory
           u3_dire*         urb_u;               //  urbit system data
           u3_dire*         com_u;               //  log directory
+          u3_dire*         epo_u;               //  current epoch directory
           c3_o             liv_o;               //  live
-          void*            mdb_u;               //  lmdb environment.
+          void*            mdb_u;               //  lmdb env of current epoch
           c3_d             sen_d;               //  commit requested
           c3_d             dun_d;               //  committed
           u3_disk_cb        cb_u;               //  callbacks
@@ -980,6 +983,31 @@
       */
         void
         u3_disk_plan(u3_disk* log_u, u3_fact* tac_u);
+
+      /* u3_disk_epoc_init(): create new epoch.
+       */
+       c3_o
+       u3_disk_epoc_init(u3_disk* log_u, c3_d epo_d);
+
+      /* u3_disk_epoc_kill(): delete an epoch.
+       */
+       c3_o
+       u3_disk_epoc_kill(u3_disk* log_u, c3_d epo_d);
+
+      /* u3_disk_epoc_last(): get latest epoch number.
+       */
+       c3_o
+       u3_disk_epoc_last(u3_disk* log_u, c3_d* lat_d);
+
+      /* u3_disk_epoc_vere(): get binary version from epoch.
+       */
+       c3_o
+       u3_disk_epoc_vere(u3_disk* log_u, c3_d epo_d, c3_c* ver_w);
+
+      /* u3_disk_migrate(): migrates disk format.
+       */
+        c3_o
+        u3_disk_migrate(u3_disk* log_u);
 
       /* u3_lord_init(): start serf.
       */
